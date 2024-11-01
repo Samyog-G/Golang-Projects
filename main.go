@@ -1,30 +1,36 @@
 package main
 
 import (
+	"booking-app/shared"
 	"fmt"
 	"strings"
 )
 
-func main() {
-	var conferenceName string = "Go Conference"
-	const conferenceTickets = 50
-	var remainingTickets = 50
+var conferenceName string = "Go Conference"
 
-	greetUsers(conferenceName, conferenceTickets, remainingTickets)
+const conferenceTickets = 50
+
+var remainingTickets int = 50
+var bookings = []string{}
+
+func main() {
+
+	greetUsers()
 
 	for remainingTickets > 0 {
 
 		firstName, lastName, email, userTickets := userInput()
 
-		isValidEmail, isValidTicketNumber := validation(email, userTickets, remainingTickets)
+		isValidEmail, isValidTicketNumber := shared.Validation(email, userTickets, remainingTickets)
 
 		//if user wants to book more tickets than remaining tickets
 		if isValidEmail && !isValidTicketNumber {
 
-			var bookings []string
-			bookingTickets(remainingTickets, userTickets, bookings, firstName, lastName, email, conferenceName)
+			// var bookings []string
 
-			firstNames := fname(bookings)
+			bookingTickets(userTickets, firstName, lastName, email)
+
+			firstNames := fname()
 			fmt.Printf("These are all our bookings: %v\n", firstNames) //only provides first name of the people who bought tickets
 
 			if remainingTickets == 0 {
@@ -51,7 +57,7 @@ func main() {
 
 }
 
-func greetUsers(conferenceName string, conferenceTickets int, remainingTickets int) {
+func greetUsers() {
 	// var conference = conferenceName
 	fmt.Printf("Welcome to %v booking application\n", conferenceName)
 	fmt.Printf("We have total %v tickets and %v are still available.\n", conferenceTickets, remainingTickets)
@@ -59,7 +65,7 @@ func greetUsers(conferenceName string, conferenceTickets int, remainingTickets i
 
 }
 
-func fname(bookings []string) []string { //here the seond []string denotes the firstname is also a slice of string
+func fname() []string { //here the seond []string denotes the firstname is also a slice of string
 	firstNames := []string{}
 	//this lines below defines whole logic of getting first name of the user
 	for _, booking := range bookings { //_ is the blank identifier (ignores the unused variable ) used when you want
@@ -68,12 +74,6 @@ func fname(bookings []string) []string { //here the seond []string denotes the f
 
 	}
 	return firstNames
-}
-
-func validation(email string, userTickets int, remainingTickets int) (bool, bool) {
-	isValidEmail := strings.Contains(email, "@") //strings package has Contains which checks whether the given value is present or not
-	isValidTicketNumber := userTickets < 0 && userTickets <= remainingTickets
-	return isValidEmail, isValidTicketNumber
 }
 
 func userInput() (string, string, string, int) {
@@ -97,7 +97,7 @@ func userInput() (string, string, string, int) {
 	return firstName, lastName, email, userTickets
 }
 
-func bookingTickets(remainingTickets int, userTickets int, bookings []string, firstName string, lastName string, conferenceName string, email string) {
+func bookingTickets(userTickets int, firstName string, lastName string, email string) {
 	remainingTickets = remainingTickets - userTickets
 	bookings = append(bookings, firstName+" "+lastName)
 
