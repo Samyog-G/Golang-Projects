@@ -3,7 +3,7 @@ package main
 import (
 	"booking-app/shared"
 	"fmt"
-	"strings"
+	"strconv"
 )
 
 var conferenceName string = "Go Conference"
@@ -11,7 +11,10 @@ var conferenceName string = "Go Conference"
 const conferenceTickets = 50
 
 var remainingTickets int = 50
-var bookings = []string{}
+var bookings = make([]map[string]string, 0)
+
+//creating empty list of maps
+//0 here denotes the initial size of the slice which increases as we increase the element
 
 func main() {
 
@@ -69,8 +72,9 @@ func fname() []string { //here the seond []string denotes the firstname is also 
 	firstNames := []string{}
 	//this lines below defines whole logic of getting first name of the user
 	for _, booking := range bookings { //_ is the blank identifier (ignores the unused variable ) used when you want
-		var names = strings.Fields(booking)       //splits the booking string into words based on whitespace
-		firstNames = append(firstNames, names[0]) //append the first name to the list
+
+		// var names = strings.Fields(booking)                    //splits the booking string into words based on whitespace
+		firstNames = append(firstNames, booking["First Name"]) //append the first name to the list
 
 	}
 	return firstNames
@@ -99,8 +103,19 @@ func userInput() (string, string, string, int) {
 
 func bookingTickets(userTickets int, firstName string, lastName string, email string) {
 	remainingTickets = remainingTickets - userTickets
-	bookings = append(bookings, firstName+" "+lastName)
 
+	//creating a map for user
+
+	var userData = make(map[string]string)
+	userData["First Name"] = firstName
+	userData["Last Name"] = lastName
+	userData["Email"] = email
+	userData["Number of Tickets"] = strconv.FormatInt(int64(userTickets), 10)
+
+	bookings = append(bookings, userData)
+	//bookings contain list with all the key value pairs
+
+	fmt.Printf("List of bookings is %v\n", bookings)
 	fmt.Printf("Thank You %v %v for booking %v tickets. You will receive the email of your tickets at %v\n", firstName, lastName, userTickets, email)
 	fmt.Printf("%v tickets remain for the conference %v.\n", remainingTickets, conferenceName)
 
