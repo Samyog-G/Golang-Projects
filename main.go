@@ -3,7 +3,8 @@ package main
 import (
 	"booking-app/shared"
 	"fmt"
-	"strconv"
+	"sync"
+	"time"
 )
 
 var conferenceName string = "Go Conference"
@@ -11,10 +12,19 @@ var conferenceName string = "Go Conference"
 const conferenceTickets = 50
 
 var remainingTickets int = 50
-var bookings = make([]map[string]string, 0)
+var bookings = make([]UserDatas, 0)
 
 //creating empty list of maps
 //0 here denotes the initial size of the slice which increases as we increase the element
+
+type UserDatas struct {
+	firstName   string
+	lastName    string
+	email       string
+	NoOfTickets int
+}
+
+var wg = sync.WaitGroup{}
 
 func main() {
 
@@ -32,6 +42,9 @@ func main() {
 			// var bookings []string
 
 			bookingTickets(userTickets, firstName, lastName, email)
+
+			wg.Add(1)
+			go sendTicket(userTickets, firstName, lastName, email)
 
 			firstNames := fname()
 			fmt.Printf("These are all our bookings: %v\n", firstNames) //only provides first name of the people who bought tickets
@@ -58,6 +71,8 @@ func main() {
 
 	}
 
+	wg.Wait()
+
 }
 
 func greetUsers() {
@@ -74,7 +89,7 @@ func fname() []string { //here the seond []string denotes the firstname is also 
 	for _, booking := range bookings { //_ is the blank identifier (ignores the unused variable ) used when you want
 
 		// var names = strings.Fields(booking)                    //splits the booking string into words based on whitespace
-		firstNames = append(firstNames, booking["First Name"]) //append the first name to the list
+		firstNames = append(firstNames, booking.firstName) //append the first name to the list
 
 	}
 	return firstNames
@@ -105,12 +120,18 @@ func bookingTickets(userTickets int, firstName string, lastName string, email st
 	remainingTickets = remainingTickets - userTickets
 
 	//creating a map for user
+	// var userData = make(map[string]string)
+	// userData["firstName"] = firstName
+	// userData["lastName"] = lastName
+	// userData["email"] = email
+	// userData["NoOfTickets"] = strconv.FormatInt(int64(userTickets), 10)
 
-	var userData = make(map[string]string)
-	userData["First Name"] = firstName
-	userData["Last Name"] = lastName
-	userData["Email"] = email
-	userData["Number of Tickets"] = strconv.FormatInt(int64(userTickets), 10)
+	var userData = UserDatas{
+		firstName:   firstName,
+		lastName:    lastName,
+		email:       email,
+		NoOfTickets: userTickets,
+	}
 
 	bookings = append(bookings, userData)
 	//bookings contain list with all the key value pairs
@@ -119,5 +140,12 @@ func bookingTickets(userTickets int, firstName string, lastName string, email st
 	fmt.Printf("Thank You %v %v for booking %v tickets. You will receive the email of your tickets at %v\n", firstName, lastName, userTickets, email)
 	fmt.Printf("%v tickets remain for the conference %v.\n", remainingTickets, conferenceName)
 
-	return
+}
+
+func sendTicket(userTickets int, firstName string, lastName string, email string) {
+	time.Sleep(5 * time.Second)
+	var ticket = fmt.Sprintf("%v tickets for %v %v", userTickets, firstName, lastName)
+
+	fmt.Printf("\n\nSending ticket %v to email address %v\n\n", ticket, email)
+	wg.Done()
 }
