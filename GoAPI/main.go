@@ -48,12 +48,12 @@ func getBookByID(id string) (*book, error) {
 
 // Code or checking out a book
 func checkoutBook(c *gin.Context) {
-	id, ok := c.GetQuery("id")
+	id := c.Param("id")
 
-	if !ok {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "Missing id parameter"})
-		return
-	}
+	// if !ok {
+	// 	c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "Missing id parameter"})
+	// 	return
+	// }
 	book, err := getBookByID(id)
 
 	if err != nil {
@@ -71,12 +71,12 @@ func checkoutBook(c *gin.Context) {
 
 // code to return the book
 func returnBook(c *gin.Context) {
-	id, ok := c.GetQuery("id")
+	id := c.Param("id")
 
-	if !ok {
-		c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "Missing id parameter"})
-		return
-	}
+	// if !ok {
+	// 	c.IndentedJSON(http.StatusBadRequest, gin.H{"message": "Missing id parameter"})
+	// 	return
+	// }
 	book, err := getBookByID(id)
 
 	if err != nil {
@@ -111,10 +111,13 @@ func main() {
 	router := gin.Default()
 	// router.SetTrustedProxies([]string{"127.0.0.1"})
 	router.GET("/books", getBook)
+
 	router.POST("/books", createBook)
+
 	router.PATCH("/checkout", checkoutBook)
 
 	router.GET("/books/:id", bookID)
+
 	router.PATCH("/return", returnBook)
 
 	router.Run("localhost:8081")
