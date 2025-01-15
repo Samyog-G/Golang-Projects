@@ -65,26 +65,36 @@ func Signup() gin.HandlerFunc {
 		if err != nil {
 			log.Panic(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Error while checking the email"})
+			return
 		}
 
 		counter, err := userCollection.CountDocuments(ctx, bson.M{"phone": user.Phone})
 		if err != nil {
 			log.Panic(err)
 			c.JSON(http.StatusInternalServerError, gin.H{"Error": "Error while checking the phone number"})
+			return
 		}
 		if count > 0 || counter > 0 {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "This email or phone number already exists"})
 			return
 		}
-		user.CreatedAt, _ = time.Now()
-		user.UpdatedAt, _ = time.Now()
-		user.ID = primitive.NewObjectID()
-		user.UserID = user.ID.Hex()
 
-		token, refreshToken, err := helpers.GenerateAllTokens(*user.Email, *user.FirstName, *user.LastName, *user.UserType, *&user.UserID)
+		user.CreatedAt = &time.Time{}
+		*user.CreatedAt = time.Now()
+		user.UpdatedAt = &time.Time{}
+		*user.UpdatedAt = time.Now()
+
+		user.ID = primitive.NewObjectID()
+
+		userID := user.ID.Hex()
+		user.UserID = &userID
+
+		token, refreshToken, err := helpers.GenerateAllTokens(*user.Email, *user.FirstName, *user.LastName, *user.UserType, *user.UserID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"message": "Error generating tokens"})
+			return
 		}
+
 		user.Token = &token
 		user.RefreshToken = &refreshToken
 
@@ -94,6 +104,7 @@ func Signup() gin.HandlerFunc {
 			c.JSON(http.StatusInternalServerError, gin.H{"Error": msg})
 			return
 		}
+
 		c.JSON(http.StatusOK, resultInsertionNumber)
 	}
 }
@@ -116,16 +127,21 @@ func Login() gin.HandlerFunc {
 		}
 
 		passwordIsValid, msg := VerifyPassword(*user.Password, *foundUser.Password)
-		if passwordIsValid != true {
+		if !passwordIsValid {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": msg})
 			return
 		}
-		if foundUser.Email == nil {
+		if foundUser.Email == nil || *foundUser.Email == "" {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "User not found"})
+			return
 		}
+
 		token, refreshToken, _ := helpers.GenerateAllTokens(*foundUser.Email, *foundUser.FirstName, *foundUser.LastName, *foundUser.UserType, *foundUser.UserID)
-		helpers.UpdateAllTokens(token, refreshToken, foundUser.UserID)
-		err = userCollection.FindOne(ctx, bson.M{"UserID": foundUser.UserID}).Decode(&foundUser)
+
+		// Dereference foundUser.UserID to pass it as a string
+		helpers.UpdateAllTokens(*foundUser.UserID, token, refreshToken)
+
+		err = userCollection.FindOne(ctx, bson.M{"UserID": *foundUser.UserID}).Decode(&foundUser)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
@@ -197,7 +213,7 @@ func GetUserById() gin.HandlerFunc {
 		var user models.User
 		err := userCollection.FindOne(ctx, bson.M{"user_id": userID}).Decode(&user)
 		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"Error": err.Error()})
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 		c.JSON(http.StatusOK, user)

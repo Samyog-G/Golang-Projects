@@ -3,6 +3,7 @@ package main
 import (
 	"net/http"
 
+	"github.com/Samyog-G/jwt-authentication/routes"
 	"github.com/gin-gonic/gin"
 )
 
